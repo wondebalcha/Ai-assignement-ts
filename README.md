@@ -9,6 +9,22 @@ This assignment evaluates your ability to:
 
 ## What you will do
 
+## Running tests locally
+
+Prerequisites: Node.js + npm.
+
+```sh
+npm install
+npm test
+```
+
+## Running tests with Docker
+
+```sh
+docker build -t ai-assignment .
+docker run --rm ai-assignment
+```
+
 ### 1) Dockerfile (required)
 
 Create a `Dockerfile` so the project can run the test suite in a non-interactive, CI-style environment.

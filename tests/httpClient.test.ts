@@ -28,6 +28,7 @@ describe("HttpClient OAuth2 behavior", () => {
 
     const resp = c.request("GET", "/me", { api: true });
 
+    expect(c.oauth2Token).toBeInstanceOf(OAuth2Token);
     expect(resp.headers.Authorization).toBe("Bearer fresh-token");
   });
 });
