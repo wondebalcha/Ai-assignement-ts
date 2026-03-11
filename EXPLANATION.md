@@ -2,16 +2,22 @@
 
 ## What was the bug?
 
-When `api: true`, the `HttpClient.request()` method only refreshed the token if it was missing or an expired `OAuth2Token`. If the token was a plain object (for example from JSON), the refresh did not run and the `Authorization` header was never added to the request.
+When `api: true`, `HttpClient.request()` mutated the caller-provided `opts.headers` object by adding an `Authorization` key. This caused surprising side effects when the same headers object was reused across requests.
+
+Additionally, if `oauth2Token` was a plain object (e.g. from JSON), it could not be used to build an authorization header.
 
 ## Why did it happen?
 
-The code relied on `instanceof OAuth2Token` to check whether the token could be validated and used to build the authorization header. A plain object is still truthy, but it does not pass the `instanceof` check. Because of this, the code skipped both the refresh logic and the header creation.
+`opts.headers` was assigned directly to a local variable and then modified in-place. Because objects are passed by reference, callers saw their input object changed.
+
+For the token case, the code relied on `instanceof OAuth2Token`. A plain object is truthy but fails the `instanceof` check, so it must be treated as invalid and refreshed.
 
 ## Why does your fix solve it?
 
-The fix treats any value that is not an `OAuth2Token` instance as invalid for API requests and forces a token refresh. After refreshing, the token becomes a valid `OAuth2Token`, allowing the `Authorization` header to be set correctly.
+The fix clones `opts.headers` before adding `Authorization`, so the returned request headers include auth without mutating the caller’s object.
+
+It also treats any non-`OAuth2Token` value as invalid for API requests and forces a refresh, ensuring an `Authorization` header can be set.
 
 ## Edge case not covered
 
-One edge case not covered is when `opts.headers` is reused across multiple requests. The tests do not verify whether modifying the same headers object could cause side effects.
+One edge case not covered is concurrent API requests that race and trigger multiple refreshes; the current code is not designed for deduping refresh calls.

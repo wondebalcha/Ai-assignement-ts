@@ -31,4 +31,16 @@ describe("HttpClient OAuth2 behavior", () => {
     expect(c.oauth2Token).toBeInstanceOf(OAuth2Token);
     expect(resp.headers.Authorization).toBe("Bearer fresh-token");
   });
+
+  test("api=true does not mutate the provided headers object", () => {
+    const c = new HttpClient();
+    c.oauth2Token = new OAuth2Token("ok", Math.floor(Date.now() / 1000) + 3600);
+
+    const providedHeaders = { "X-Test": "1" };
+    const resp = c.request("GET", "/me", { api: true, headers: providedHeaders });
+
+    expect(providedHeaders).toEqual({ "X-Test": "1" });
+    expect(resp.headers["X-Test"]).toBe("1");
+    expect(resp.headers.Authorization).toBe("Bearer ok");
+  });
 });
